@@ -1,0 +1,42 @@
+:root {
+  --background: #f0f0f0; /* Lighter background for a more greyish-white look */
+  --foreground: #333333; /* Darker foreground for contrast and readability */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #e0e0e0; /* Lighter background for a more pronounced dark mode */
+    --foreground: #555555; /* Darker foreground for a cohesive dark theme */
+  }
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden; /* Prevent horizontal overflow for a clean layout */
+}
+
+body {
+  color: var(--foreground); /* Use the defined foreground color for text */
+  background: var(--background); /* Use the defined background color for the body */
+  font-family: Arial, Helvetica, sans-serif; /* Simple sans-serif font for a clean look */
+  -webkit-font-smoothing: antialiased; /* Smooth font rendering for a professional look */
+  -moz-osx-font-smoothing: grayscale; /* Smooth font rendering for Firefox on macOS */
+}
+
+* {
+  box-sizing: border-box; /* Use border-box for consistent box model */
+  padding: 0; /* Reset padding to ensure consistent spacing */
+  margin: 0; /* Reset margin to ensure consistent spacing */
+}
+
+a {
+  color: inherit; /* Inherit color to ensure consistency with the rest of the text */
+  text-decoration: none; /* Remove underline for a clean look */
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark; /* Declare dark color scheme for the document */
+  }
+}
