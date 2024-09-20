@@ -1,0 +1,25 @@
+.input-number {
+  width: 100%;
+  max-width: 400px; /* Adjust as needed */
+  margin: 0 auto; /* Center the component */
+}
+
+.input-number input {
+  border: 2px solid #e2e8f0; /* Light gray border */
+  border-radius: 8px; /* Rounded corners */
+  padding: 12px; /* Padding for input */
+  font-size: 1rem; /* Consistent font size */
+  transition: border-color 0.3s; /* Smooth transition for border color */
+}
+
+.input-number input:focus {
+  border-color: #0070f3; /* Highlight on focus */
+  outline: none; /* Remove default outline */
+  box-shadow: 0 0 5px rgba(0, 112, 243, 0.5); /* Subtle shadow for focus */
+}
+
+.input-number .error {
+  color: #e53e3e; /* Red color for error messages */
+  font-size: 14px; /* Font size for error messages */
+  margin-top: 4px; /* Space above error message */
+}
