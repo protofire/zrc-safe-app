@@ -8,6 +8,7 @@ import {
   ScaleFade,
   InputRightElement,
   IconButton,
+  InputLeftElement,
 } from '@chakra-ui/react';
 import { ChevronDownIcon, CloseIcon } from '@chakra-ui/icons';
 import SelectLoading from './Loading';
@@ -27,11 +28,13 @@ function Select<T>(props: SelectProps<T>) {
     onBlur,
     filterWith,
     multiple,
+    inputLeftElement,
     optionTemplate,
     emptyTemplate,
     loadingTemplate,
     rightIcon,
     loading,
+    isDisabled = false,
   } = props;
 
   const {
@@ -58,6 +61,9 @@ function Select<T>(props: SelectProps<T>) {
     <FormControl onBlur={handleBlurInput}>
       {label && <FormLabel>{label}</FormLabel>}
       <InputGroup>
+        {inputLeftElement && (
+          <InputLeftElement>{inputLeftElement()}</InputLeftElement>
+        )}
         <Input
           ref={inputRef}
           onFocus={() => {
@@ -76,6 +82,7 @@ function Select<T>(props: SelectProps<T>) {
           }}
           onBlur={onBlur}
           borderColor="gray.400"
+          isDisabled={isDisabled}
         />
         <InputRightElement>
           <>
