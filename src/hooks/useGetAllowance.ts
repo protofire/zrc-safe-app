@@ -9,12 +9,13 @@ function useGetAllowance() {
   return React.useCallback(
     (
       tokenAddress: string,
-      walletAddress: string,
+      ownerAddress: string,
+      spenderAddress: string,
     ) => {
       const getBalance = async () => {
         if (!web3) return 0;
         const contract = new ethers.Contract(tokenAddress, ZRC20ABI, web3);
-        const allowanceHex = await contract.allowance(walletAddress, tokenAddress);
+        const allowanceHex = await contract.allowance(ownerAddress, spenderAddress);
         const allowance = ethers.formatUnits(allowanceHex, await contract.decimals());
         console.log('allowance', allowance);
         return +allowance;

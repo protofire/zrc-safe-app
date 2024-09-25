@@ -15,4 +15,9 @@ export const tokenIcons = {
   '901': '/img/sol-logo.svg',
 };
 
+export const blockscoutUrl = {
+  '7000': 'https://zetachain.blockscout.com',
+  '7001': 'https://zetachain-athens-3.blockscout.com',
+};
+
 

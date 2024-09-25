@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button, Box, Text, Image } from '@chakra-ui/react';
 import InputNumber from '../InputNumber';
 import Selector from '../Selector';
@@ -8,7 +8,11 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchTokens } from '@/queries/getZRCTokens';
 import CircularProgress from '../CircularProgress';
 import { Token } from '@/queries/getZRCTokens';
-import { tokenIcons, ZETA_CHAIN_ID_TESTNET } from '@/config/constants';
+import {
+  blockscoutUrl,
+  tokenIcons,
+  ZETA_CHAIN_ID_TESTNET,
+} from '@/config/constants';
 import useGetTokenBalance from '@/hooks/useGetTokenBalance';
 import InputText from '../InputText';
 import { encodeApprove, encodeWithdrawal } from './utils';
@@ -17,22 +21,31 @@ import useWeb3 from '@/hooks/useWeb3';
 import { getZRC20Instance } from '@/utils/zrc20instance';
 import { ethers } from 'ethers';
 import { TransactionStatus } from '@safe-global/safe-gateway-typescript-sdk';
+import useGetGasFee, { GasFee } from '@/hooks/useGetGasFee';
 
 const WithdrawalForm: React.FC = () => {
   const { safe, sdk } = useSafeAppsSDK();
   const { web3 } = useWeb3();
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['tokens'],
     queryFn: () => fetchTokens(safe.chainId === ZETA_CHAIN_ID_TESTNET),
   });
-  const [recipientAddress, setRecipientAddress] = useState<string>('');
-  const [selectedToken, setSelectedToken] = useState<string>('');
-  const [amount, setAmount] = useState<number>(0);
-  const [txHash, setTxHash] = useState<string | undefined>();
-  const [zrcBalance, setZrcBalance] = useState<number>(0);
-  const [allowance, setAllowance] = useState<number>(0);
+  const [recipientAddress, setRecipientAddress] = React.useState<string>('');
+  const [selectedToken, setSelectedToken] = React.useState<string>('');
+  const [amount, setAmount] = React.useState<number>(0);
+  const [txHash, setTxHash] = React.useState<string | undefined>();
+  const [zrcBalance, setZrcBalance] = React.useState<number>(0);
+  const [gasFeeBalance, setGasFeeBalance] = React.useState<number>(0);
+  const [isUpdate, setIsUpdate] = React.useState<boolean>(false);
+  const [gasFee, setGasFee] = React.useState<GasFee>({
+    gasFeeAddress: '',
+    gasFeeAmount: 0,
+    gasFeeAmountInWei: BigInt(0),
+  });
+  const [gasTokenAllowance, setGasTokenAllowance] = React.useState<number>(0);
   const getTokenBalance = useGetTokenBalance();
   const getAllowance = useGetAllowance();
+  const getGasFee = useGetGasFee();
 
   const optionIcon = React.useCallback(
     (option?: Option<Token>) => (
@@ -78,9 +91,31 @@ const WithdrawalForm: React.FC = () => {
     [sdk]
   );
 
-  const handleRecipientAddressChange = (value: string) => {
-    setRecipientAddress(value);
-  };
+  const updateTokenInfo = React.useCallback(
+    async (zrc20ContractAddress: string) => {
+      setIsUpdate(true);
+      const balance = await getTokenBalance(
+        zrc20ContractAddress,
+        safe.safeAddress
+      );
+      setZrcBalance(balance);
+      const gasFee = await getGasFee(zrc20ContractAddress);
+      setGasFee(gasFee);
+      const allowance = await getAllowance(
+        gasFee.gasFeeAddress,
+        safe.safeAddress,
+        zrc20ContractAddress
+      );
+      setGasTokenAllowance(allowance);
+      const gasFeeBalance = await getTokenBalance(
+        gasFee.gasFeeAddress,
+        safe.safeAddress
+      );
+      setGasFeeBalance(gasFeeBalance);
+      setIsUpdate(false);
+    },
+    [getTokenBalance, safe.safeAddress, getGasFee, getAllowance]
+  );
 
   const handleTokenSelect = React.useCallback(
     (token: Token) => {
@@ -89,16 +124,37 @@ const WithdrawalForm: React.FC = () => {
         return;
       }
       setSelectedToken(token.zrc20_contract_address);
-      getTokenBalance(token.zrc20_contract_address, safe.safeAddress).then(
-        (balance) => setZrcBalance(balance)
-      );
-      getAllowance(token.zrc20_contract_address, safe.safeAddress).then(
-        (allowance) => setAllowance(allowance)
-      );
+      updateTokenInfo(token.zrc20_contract_address);
       setAmount(0);
     },
-    [getTokenBalance, safe.safeAddress, getAllowance]
+    [updateTokenInfo]
   );
+
+  const approve = React.useCallback(async () => {
+    const txData = encodeApprove(
+      gasFee.gasFeeAddress,
+      selectedToken,
+      gasFee.gasFeeAmountInWei
+    );
+    const tx = await sdk.txs.send({ txs: [txData] });
+    setTxHash(tx.safeTxHash);
+    await waitTx(tx.safeTxHash);
+  }, [gasFee, sdk, selectedToken, waitTx]);
+
+  const withdraw = React.useCallback(async () => {
+    const zrc20Instance = getZRC20Instance(selectedToken, web3!);
+    const amountInWei = ethers.parseUnits(
+      amount.toString(),
+      await zrc20Instance.decimals()
+    );
+    const txData = encodeWithdrawal(
+      recipientAddress,
+      amountInWei,
+      selectedToken
+    );
+    const tx = await sdk.txs.send({ txs: [txData] });
+    return tx;
+  }, [selectedToken, web3, amount, recipientAddress, sdk]);
 
   if (isLoading) return <CircularProgress />;
   if (error) return <div>Error: {error.message}</div>;
@@ -107,49 +163,20 @@ const WithdrawalForm: React.FC = () => {
     setAmount(value);
   };
 
-  const handleSubmitAsync = async () => {
-    const zrc20Instance = getZRC20Instance(selectedToken, web3!);
-    const amountInWei = ethers.parseUnits(
-      amount.toString(),
-      await zrc20Instance.decimals()
-    );
-    const allowanceInWei = ethers.parseUnits(
-      allowance.toString(),
-      await zrc20Instance.decimals()
-    );
-    if (allowanceInWei < amountInWei) {
-      const txData = encodeApprove(selectedToken, amountInWei);
-      const tx = await sdk.txs.send({ txs: [txData] });
-      setTxHash(tx.safeTxHash);
-      await waitTx(tx.safeTxHash);
-      const allowance = await getAllowance(selectedToken, safe.safeAddress);
-      setAllowance(allowance);
-      setTxHash(undefined);
-      return;
-    }
-    const txData = encodeWithdrawal(
-      recipientAddress,
-      amountInWei,
-      selectedToken
-    );
-    console.log(txData);
-    console.log(
-      `Withdrawing ${amount} of ${selectedToken} to ${recipientAddress}`
-    );
-    const tx = await sdk.txs.send({ txs: [txData] });
-    setTxHash(tx.safeTxHash);
-    await waitTx(tx.safeTxHash);
-    await refetch();
-    const balance = await getTokenBalance(selectedToken, safe.safeAddress);
-    setZrcBalance(balance);
-    setTxHash(undefined);
-    setAmount(0);
+  const handleRecipientAddressChange = (value: string) => {
+    setRecipientAddress(value);
   };
 
-  const handleSubmit = () => {
-    handleSubmitAsync().catch((error) => {
-      console.error('Error submitting transaction:', error);
-    });
+  const handleSubmitAsync = async () => {
+    if (gasTokenAllowance < gasFee.gasFeeAmount) {
+      await approve();
+    }
+    const tx = await withdraw();
+    setTxHash(tx.safeTxHash);
+    await waitTx(tx.safeTxHash);
+    await updateTokenInfo(selectedToken);
+    setTxHash(undefined);
+    setAmount(0);
   };
 
   const tokens = data || [];
@@ -181,7 +208,7 @@ const WithdrawalForm: React.FC = () => {
             onClear={() => {
               setSelectedToken('');
               setZrcBalance(0);
-              setAllowance(0);
+              setGasTokenAllowance(0);
               setAmount(0);
             }}
             label="ZRC-20 Token *"
@@ -218,23 +245,48 @@ const WithdrawalForm: React.FC = () => {
         <Box display="flex" justifyContent="center">
           <Button
             isDisabled={
-              !recipientAddress || !selectedToken || !amount || !!txHash || !zrcBalance
+              !recipientAddress ||
+              !selectedToken ||
+              !amount ||
+              !!txHash ||
+              !zrcBalance
             }
-            onClick={handleSubmit}
+            onClick={() => handleSubmitAsync()}
             colorScheme="teal"
             mt={4}
           >
-            Withdraw
+            {gasTokenAllowance < gasFee.gasFeeAmount ? 'Approve' : 'Withdraw'}
           </Button>
         </Box>
       </Box>
 
       <Box width="380px">
-        {!!zrcBalance && allowance < amount && (
-          <Box>
+        {!!zrcBalance &&
+          gasTokenAllowance < gasFee.gasFeeAmount &&
+          !isUpdate && (
+            <Box mb={4}>
+              <Text fontSize="sm" align="center">
+                <b>Approval Required</b> <br /> We need your permission to
+                proceed with the withdrawal.
+              </Text>
+            </Box>
+          )}
+        {gasFeeBalance < gasFee.gasFeeAmount && !isUpdate && (
+          <Box mb={4}>
             <Text fontSize="sm" align="center">
-              <b>Approval Required</b> <br /> We need your permission to proceed
-              with the withdrawal.
+              <b>Insufficient Gas Fee Balance</b> <br /> You need to have at
+              least <b>{gasFee.gasFeeAmount}</b> of{' '}
+              <a
+                href={`${
+                  blockscoutUrl[
+                    safe.chainId.toString() as keyof typeof blockscoutUrl
+                  ]
+                }/address/${gasFee.gasFeeAddress}`}
+                target="_blank"
+              >
+                <b>{gasFee.gasFeeAddress}</b>
+              </a>{' '}
+              in your balance to proceed with the withdrawal.
             </Text>
           </Box>
         )}

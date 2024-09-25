@@ -12,9 +12,9 @@ export const encodeWithdrawal = (recipientAddress: string, amount: unknown, toke
   };
 };
 
-export const encodeApprove = (tokenAddress: string, amount: unknown): SafeTransactionDataPartial => {
+export const encodeApprove = (tokenAddress: string, spenderAddress: string, amount: unknown): SafeTransactionDataPartial => {
   const zrc20Interface = new Interface(ZRC20ABI);
-  const args = [tokenAddress, amount]
+  const args = [spenderAddress, amount]
   return {
     to: tokenAddress,
     value: '0',
