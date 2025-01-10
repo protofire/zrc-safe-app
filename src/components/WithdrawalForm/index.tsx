@@ -156,6 +156,18 @@ const WithdrawalForm: React.FC = () => {
     return tx;
   }, [selectedToken, web3, amount, recipientAddress, sdk]);
 
+  const getTokenName = React.useCallback(
+    (tokenAddress: string) => {
+      if (!data) return '';
+
+      const token = data?.find(
+        (token) => token.zrc20_contract_address === tokenAddress
+      );
+      return token?.name || '';
+    },
+    [data]
+  );
+
   if (isLoading) return <CircularProgress />;
   if (error) return <div>Error: {error.message}</div>;
 
@@ -284,7 +296,7 @@ const WithdrawalForm: React.FC = () => {
                 }/address/${gasFee.gasFeeAddress}`}
                 target="_blank"
               >
-                <b>{gasFee.gasFeeAddress}</b>
+                <b>{getTokenName(gasFee.gasFeeAddress)}</b>
               </a>{' '}
               in your balance to proceed with the withdrawal.
             </Text>
