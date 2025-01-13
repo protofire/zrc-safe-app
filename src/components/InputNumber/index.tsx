@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Input,
   FormControl,
@@ -30,9 +30,13 @@ const InputNumber: React.FC<InputNumberProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = Number(event.target.value);
+    const trimmedValue = event.target.value.replace(/^0+(\d)/, '$1');
+    event.target.value = trimmedValue;
+    const newValue = Number(trimmedValue);
 
-    if (max && newValue > max) {
+    if (isNaN(newValue)) {
+      setError('Please enter a valid number');
+    } else if (max && newValue > max) {
       setError(`Please enter a number less than ${max}`);
     } else if (newValue < min) {
       setError(`Please enter a number greater than ${min}`);
@@ -41,6 +45,7 @@ const InputNumber: React.FC<InputNumberProps> = ({
     } else {
       setError(null);
     }
+
     onChange(newValue);
   };
 

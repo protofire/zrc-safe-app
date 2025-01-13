@@ -279,7 +279,7 @@ const WithdrawalForm: React.FC = () => {
         </Box>
       </Box>
 
-      <Box width="380px">
+      <Box width="360px">
         {!!zrcBalance &&
           gasTokenAllowance < gasFee.gasFeeAmount &&
           !isUpdate && (
@@ -291,7 +291,13 @@ const WithdrawalForm: React.FC = () => {
             </Box>
           )}
         {gasFeeBalance < gasFee.gasFeeAmount && !isUpdate && (
-          <Box mb={4}>
+          <Box
+            mb={4}
+            bg="red.50"
+            borderRadius="md"
+            p={4}
+            color="red.300"
+          >
             <Text fontSize="sm" align="center">
               <b>Insufficient Gas Fee Balance</b> <br /> You need to have at
               least <b>{gasFee.gasFeeAmount}</b> of{' '}
@@ -303,7 +309,16 @@ const WithdrawalForm: React.FC = () => {
                 }/address/${gasFee.gasFeeAddress}`}
                 target="_blank" rel="noreferrer"
               >
-                <b>{getTokenName(gasFee.gasFeeAddress)}</b>
+                <Box display="flex" justifyContent="center" alignItems="center">
+                  <Image
+                    src="/img/zeta-logo.svg"
+                    width="20px"
+                    height="20px"
+                    mr={2}
+                    alt='Zeta Logo'
+                  />
+                  <b>{getTokenName(gasFee.gasFeeAddress)}</b>
+                </Box>
               </a>{' '}
               in your balance to proceed with the withdrawal.
             </Text>
