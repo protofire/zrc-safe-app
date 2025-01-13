@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Box, Text, Image } from '@chakra-ui/react';
+import { Button, Box, Text, Image, useDisclosure } from '@chakra-ui/react';
 import InputNumber from '../InputNumber';
 import Selector from '../Selector';
 import { Option } from '../Selector/types';
@@ -22,6 +22,7 @@ import { getZRC20Instance } from '@/utils/zrc20instance';
 import { ethers } from 'ethers';
 import { TransactionStatus } from '@safe-global/safe-gateway-typescript-sdk';
 import useGetGasFee, { GasFee } from '@/hooks/useGetGasFee';
+import ConfirmationModal from './ConfirmationModal';
 
 const WithdrawalForm: React.FC = () => {
   const { safe, sdk } = useSafeAppsSDK();
@@ -37,6 +38,7 @@ const WithdrawalForm: React.FC = () => {
   const [zrcBalance, setZrcBalance] = React.useState<number>(0);
   const [gasFeeBalance, setGasFeeBalance] = React.useState<number>(0);
   const [isUpdate, setIsUpdate] = React.useState<boolean>(false);
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const [gasFee, setGasFee] = React.useState<GasFee>({
     gasFeeAddress: '',
     gasFeeAmount: 0,
@@ -180,6 +182,11 @@ const WithdrawalForm: React.FC = () => {
   };
 
   const handleSubmitAsync = async () => {
+    onOpen();
+  };
+
+  const handleConfirmWithdrawal = async () => {
+    onClose();
     if (gasTokenAllowance < gasFee.gasFeeAmount) {
       await approve();
     }
@@ -294,7 +301,7 @@ const WithdrawalForm: React.FC = () => {
                     safe.chainId.toString() as keyof typeof blockscoutUrl
                   ]
                 }/address/${gasFee.gasFeeAddress}`}
-                target="_blank"
+                target="_blank" rel="noreferrer"
               >
                 <b>{getTokenName(gasFee.gasFeeAddress)}</b>
               </a>{' '}
@@ -303,6 +310,15 @@ const WithdrawalForm: React.FC = () => {
           </Box>
         )}
       </Box>
+
+      <ConfirmationModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={handleConfirmWithdrawal}
+        amount={amount}
+        tokenName={getTokenName(selectedToken)}
+        recipientAddress={recipientAddress}
+      />
     </>
   );
 };
