@@ -15,9 +15,7 @@ function useGetTokenBalance() {
         if (!web3) return 0;
         const contract = new ethers.Contract(tokenAddress, ZRC20ABI, web3);
         const balanceHex = await contract.balanceOf(walletAddress);
-        console.log('balanceHex', balanceHex);
         const balance = ethers.formatUnits(balanceHex, await contract.decimals());
-        console.log('balance', balance);
         return +balance;
       };
       return getBalance();

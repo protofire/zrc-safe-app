@@ -17,7 +17,6 @@ function useGetAllowance() {
         const contract = new ethers.Contract(tokenAddress, ZRC20ABI, web3);
         const allowanceHex = await contract.allowance(ownerAddress, spenderAddress);
         const allowance = ethers.formatUnits(allowanceHex, await contract.decimals());
-        console.log('allowance', allowance);
         return +allowance;
       };
       return getBalance();
