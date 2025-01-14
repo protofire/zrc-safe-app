@@ -80,6 +80,7 @@ function Select<T>(props: SelectProps<T>) {
 
             clear(true);
           }}
+          autoComplete="off"
           onBlur={onBlur}
           borderColor="gray.400"
           isDisabled={isDisabled}
@@ -133,7 +134,7 @@ function Select<T>(props: SelectProps<T>) {
           border="1px"
           borderColor="gray.400"
           bg="#e0e0e0"
-          maxHeight={200}
+          maxHeight={210}
           onMouseLeave={handleMouseLeaveList}
           onMouseEnter={handleMouseEnterList}
           sx={{
