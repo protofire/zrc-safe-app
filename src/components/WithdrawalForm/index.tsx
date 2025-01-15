@@ -23,6 +23,7 @@ import { ethers } from 'ethers';
 import { TransactionStatus } from '@safe-global/safe-gateway-typescript-sdk';
 import useGetGasFee, { GasFee } from '@/hooks/useGetGasFee';
 import ConfirmationModal from './ConfirmationModal';
+import styles from './styles.module.css';
 
 const WithdrawalForm: React.FC = () => {
   const { safe, sdk } = useSafeAppsSDK();
@@ -57,7 +58,7 @@ const WithdrawalForm: React.FC = () => {
         mr={1}
         src={
           tokenIcons[
-            option?.value?.foreign_chain_id as keyof typeof tokenIcons
+          option?.value?.foreign_chain_id as keyof typeof tokenIcons
           ] || ''
         }
         alt={option?.label}
@@ -72,9 +73,9 @@ const WithdrawalForm: React.FC = () => {
     );
     return token
       ? optionIcon({
-          label: token?.name || '',
-          value: token,
-        })
+        label: token?.name || '',
+        value: token,
+      })
       : null;
   }, [selectedToken, data, optionIcon]);
 
@@ -302,11 +303,10 @@ const WithdrawalForm: React.FC = () => {
               <b>Insufficient Gas Fee Balance</b> <br /> You need to have at
               least <b>{gasFee.gasFeeAmount}</b> of{' '}
               <a
-                href={`${
-                  blockscoutUrl[
-                    safe.chainId.toString() as keyof typeof blockscoutUrl
-                  ]
-                }/address/${gasFee.gasFeeAddress}`}
+                href={`${blockscoutUrl[
+                  safe.chainId.toString() as keyof typeof blockscoutUrl
+                ]
+                  }/address/${gasFee.gasFeeAddress}`}
                 target="_blank" rel="noreferrer"
               >
                 <Box display="flex" justifyContent="center" alignItems="center">
@@ -317,7 +317,7 @@ const WithdrawalForm: React.FC = () => {
                     mr={2}
                     alt='Zeta Logo'
                   />
-                  <b>{getTokenName(gasFee.gasFeeAddress)}</b>
+                  <p className={styles.truncateText}><b>{getTokenName(gasFee.gasFeeAddress)}</b></p>
                 </Box>
               </a>{' '}
               in your balance to proceed with the withdrawal.
