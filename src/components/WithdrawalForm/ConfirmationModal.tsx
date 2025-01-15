@@ -42,7 +42,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             </strong>
           </Text>
           <Text>
-            The tokens will be sent on their native chain to:
+            The tokens will be sent on their native chain to: {' '}
             <strong>{recipientAddress}</strong>
           </Text>
         </ModalBody>
